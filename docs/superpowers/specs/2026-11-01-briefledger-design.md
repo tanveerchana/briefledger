@@ -1,0 +1,11 @@
+# BriefLedger design
+
+Build the user-authorized Python portfolio project with FastAPI, SQLite FTS5 and a plain HTML/CSS/JavaScript interface. The purpose is finding evidence in small text collections, with visible source passages and line references. This is lexical retrieval, not an LLM answer generator. No remote services, API keys, accounts, or fabricated citations.
+
+The chosen architecture uses a browser-private opaque HttpOnly capability cookie, a SQLite collection registry, and one SQLite document/FTS database per collection. This physically isolates both content and BM25 corpus statistics. A global multi-tenant FTS table was rejected because ranking statistics would include other visitors' documents. A vector/LLM service was rejected because it adds secrets, cost and generated claims without improving this bounded evidence-finding task.
+
+The interface has a compact collection sidebar, a readable search workspace, evidence cards, a source drawer with line numbers, and accessible upload/reset confirmation dialogs. It uses neutral white and slate, 16px base text, wide search input, keyboard focus states, and a mobile stacked layout. Four synthetic sample documents make the first visit immediately usable. Users may upload UTF-8 .txt/.md files or paste text, search terms, inspect evidence, delete documents and reset their own collection to samples.
+
+Limits: 128 KiB/document, 30 documents and 2 MiB/collection, 256 KiB HTTP write bodies, 160 search characters and 12 terms. Sessions expire seven days after creation; database files must be on persistent storage for durable deployment. A free ephemeral demo may lose data on restart and must say so. The anonymous session is a capability model, not production identity authentication. There is no sharing or recovery without the same browser cookie.
+
+Writes require same-origin Origin, a collection CSRF token and JSON. Cookies are host-only, HttpOnly, SameSite=Lax and Secure by default; local HTTP requires explicit developer opt-out. All uploaded content is rendered as text; no Markdown/HTML execution, dynamic remote fetches or filesystem paths from filenames. Quoted, parameterized FTS queries prevent MATCH-language injection; delete/reset operations update source and index in one transaction.

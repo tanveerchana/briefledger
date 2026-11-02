@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "briefledger"
+version = "1.0.0"
+description = "A private, source-grounded document search workbench built with Python and SQLite FTS5."
+requires-python = ">=3.12"
+dependencies = ["fastapi==0.162.0", "pydantic==2.14.2", "uvicorn==0.54.0", "starlette==1.10.0"]
+
+[project.optional-dependencies]
+dev = ["pytest==9.0.2", "httpx2==2.16.0", "ruff==0.14.14"]
+
+[tool.setuptools.package-data]
+briefledger = ["static/*", "templates/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

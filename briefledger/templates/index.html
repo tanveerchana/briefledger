@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Search your documents. Inspect the evidence. A private, source-grounded lexical search workbench built with Python and SQLite."
+    />
+    <meta name="theme-color" content="#f8fafc" />
+    <title>BriefLedger — evidence, in context</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <script defer src="/static/app.js"></script>
+  </head>
+  <body>
+    <svg
+      class="icon-defs"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <symbol id="i-ledger" viewBox="0 0 24 24">
+        <path d="M6 3h12a2 2 0 0 1 2 2v15H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z" />
+        <path d="M6 3v14h14M9 7h7M9 11h5M3 17h3" />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <circle cx="10.8" cy="10.8" r="6.8" />
+        <path d="m16 16 4.5 4.5" />
+      </symbol>
+      <symbol id="i-file" viewBox="0 0 24 24">
+        <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z" />
+        <path d="M14 3v6h6M8 13h8M8 17h5" />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M5 12h14m-5-5 5 5-5 5" />
+      </symbol>
+      <symbol id="i-external" viewBox="0 0 24 24">
+        <path
+          d="M14 4h6v6M20 4l-9 9M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"
+        />
+      </symbol>
+      <symbol id="i-x" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M6 18 18 6" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" />
+      </symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24">
+        <path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z" />
+        <path d="m8 12 3 3 5-6" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v6M12 7v.1" />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path
+          d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"
+        />
+      </symbol>
+      <symbol id="i-reset" viewBox="0 0 24 24">
+        <path d="M3 4v6h6M4 10a8 8 0 1 1 0 5" />
+      </symbol>
+      <symbol id="i-lines" viewBox="0 0 24 24">
+        <path d="M8 5h13M8 12h13M8 19h13M3 5h.1M3 12h.1M3 19h.1" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+    </svg>
+    <a class="skip-link" href="#main-content">Skip to search</a>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Collection navigation">
+        <a class="brand" href="/" aria-label="BriefLedger home"
+          ><span class="brand-mark"
+            ><svg class="icon"><use href="#i-ledger" /></svg></span
+          ><span>BriefLedger<span class="brand-period">.</span></span></a
+        >
+        <div class="workspace-label">
+          <span class="workspace-avatar">B</span
+          ><span>My workspace<small>Browser-private collection</small></span
+          ><span class="status-dot" aria-label="Local collection"></span>
+        </div>
+        <nav class="main-nav" aria-label="Workbench">
+          <button class="nav-item active" id="nav-search" aria-current="page">
+            <svg class="icon"><use href="#i-search" /></svg>Search evidence<span
+              class="key-hint"
+              >/</span
+            >
+          </button>
+          <button class="nav-item" id="nav-sources">
+            <svg class="icon"><use href="#i-file" /></svg>All sources<span
+              class="nav-count"
+              id="nav-count"
+              >—</span
+            >
+          </button>
+        </nav>
+        <div class="sidebar-section-label">
+          <span>YOUR COLLECTION</span><span id="source-count">—</span>
+        </div>
+        <div
+          class="sidebar-sources"
+          id="sidebar-sources"
+          aria-label="Open a source"
+        >
+          <p class="muted sidebar-loading">Opening your collection…</p>
+        </div>
+        <button class="add-source secondary" id="sidebar-add" disabled>
+          <svg class="icon"><use href="#i-plus" /></svg>Add a source
+        </button>
+        <div class="sidebar-bottom">
+          <button class="text-button subtle" id="reset-button" disabled>
+            <svg class="icon"><use href="#i-reset" /></svg>Reset sample
+            collection
+          </button>
+          <div class="privacy-note">
+            <svg class="icon"><use href="#i-shield" /></svg>
+            <p>
+              Private to this browser<small id="privacy-detail"
+                >Seven-day collection · no account</small
+              >
+            </p>
+          </div>
+        </div>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <div class="breadcrumb">
+            <span>Workspace</span><span class="breadcrumb-slash">/</span
+            ><strong id="breadcrumb-view">Evidence search</strong>
+          </div>
+          <div class="topbar-actions">
+            <span class="engine-badge"
+              ><span class="engine-dot"></span>Lexical retrieval</span
+            ><button
+              class="icon-button"
+              id="about-button"
+              aria-label="How BriefLedger works"
+            >
+              <svg class="icon"><use href="#i-info" /></svg>
+            </button>
+          </div>
+        </header>
+        <main class="main-content" id="main-content" tabindex="-1">
+          <div class="hosting-notice" id="hosting-notice" hidden role="note">
+            <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>
+            <div>
+              <strong>Temporary demo storage</strong>
+              <p id="hosting-notice-text"></p>
+            </div>
+          </div>
+          <section id="search-view" aria-labelledby="search-title">
+            <div class="page-heading">
+              <div>
+                <p class="eyebrow">THE DOCUMENT WORKBENCH</p>
+                <h1 id="search-title">Your evidence,<br />in context.</h1>
+                <p class="page-description">
+                  Find the right passage. See where it came from.<br
+                    class="desktop-break"
+                  />
+                  Keep every conclusion close to its source.
+                </p>
+              </div>
+              <div class="heading-decoration" aria-hidden="true">
+                <span class="paper paper-back"></span
+                ><span class="paper paper-front"
+                  ><span></span><span></span><span></span><span></span
+                  ><span class="paper-highlight"></span></span
+                ><span class="paper-check"
+                  ><svg class="icon"><use href="#i-check" /></svg
+                ></span>
+              </div>
+            </div>
+            <div class="collection-overview">
+              <span
+                ><svg class="icon"><use href="#i-file" /></svg
+                ><strong id="stat-sources">—</strong> sources</span
+              ><span class="overview-divider"></span
+              ><span
+                ><svg class="icon"><use href="#i-lines" /></svg
+                ><strong id="stat-passages">—</strong> indexed passages</span
+              ><span class="overview-divider"></span
+              ><span class="overview-private"
+                ><svg class="icon"><use href="#i-shield" /></svg>Only your
+                collection</span
+              ><button class="text-button overview-add" id="main-add" disabled>
+                <svg class="icon"><use href="#i-plus" /></svg>Add a source
+              </button>
+            </div>
+            <div class="search-panel">
+              <form id="search-form" class="search-form" role="search">
+                <label class="sr-only" for="search-input"
+                  >Search terms in your collection</label
+                ><svg class="icon search-input-icon">
+                  <use href="#i-search" /></svg
+                ><input
+                  id="search-input"
+                  name="q"
+                  type="search"
+                  placeholder="Search for a topic, term, or decision…"
+                  maxlength="160"
+                  autocomplete="off"
+                  required
+                /><button
+                  type="submit"
+                  class="primary"
+                  id="search-button"
+                  disabled
+                >
+                  Search collection<svg class="icon">
+                    <use href="#i-arrow" />
+                  </svg>
+                </button>
+              </form>
+              <div class="search-suggestions">
+                <span>Try a search</span
+                ><button data-query="rollback">rollback</button
+                ><button data-query="access reviews">access reviews</button
+                ><button data-query="retention">retention</button
+                ><button data-query="no evidence">no evidence</button>
+              </div>
+            </div>
+            <div class="results-toolbar">
+              <div>
+                <h2 id="results-heading">Collection evidence</h2>
+                <span id="results-summary" aria-live="polite"
+                  >Preparing your sample sources…</span
+                >
+              </div>
+              <label class="filter-label"
+                ><span class="sr-only">Limit search to a source</span
+                ><select
+                  id="source-filter"
+                  aria-label="Limit search to a source"
+                >
+                  <option value="">All sources</option>
+                </select></label
+              >
+            </div>
+            <div
+              id="results"
+              class="results"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <div class="loading-state">
+                <span class="loader"></span>Opening your private collection…
+              </div>
+            </div>
+            <div class="retrieval-footnote">
+              <svg class="icon"><use href="#i-info" /></svg>
+              <p>
+                These are source excerpts, not generated answers. Search matches
+                your words using SQLite FTS5.
+              </p>
+              <button class="text-button" id="method-link">
+                How it works<svg class="icon"><use href="#i-arrow" /></svg>
+              </button>
+            </div>
+          </section>
+          <section id="sources-view" hidden aria-labelledby="sources-title">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">YOUR COLLECTION</p>
+                <h1 id="sources-title">
+                  A small library.<br />A clear paper trail.
+                </h1>
+                <p class="page-description">
+                  Every source stays readable, searchable, and yours to remove.
+                </p>
+              </div>
+              <button class="primary" id="library-add">
+                <svg class="icon"><use href="#i-plus" /></svg>Add a source
+              </button>
+            </div>
+            <div class="library-summary" id="library-summary"></div>
+            <div class="library-list" id="library-list"></div>
+            <div class="library-tools">
+              <p class="library-hint">
+                UTF-8 text and Markdown · 128 KiB per source · 30 sources / 2
+                MiB per collection
+              </p>
+              <button class="text-button subtle" id="library-reset" disabled>
+                <svg class="icon"><use href="#i-reset" /></svg>Reset sample
+                collection
+              </button>
+            </div>
+          </section>
+          <footer class="page-footer">
+            <span>Built for checking the source.</span
+            ><span
+              >Python <span class="footer-dot">·</span> FastAPI
+              <span class="footer-dot">·</span> SQLite</span
+            >
+          </footer>
+        </main>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <dialog
+      id="upload-dialog"
+      class="modal upload-modal"
+      aria-labelledby="upload-title"
+    >
+      <div class="modal-heading">
+        <div>
+          <p class="eyebrow">BUILD YOUR COLLECTION</p>
+          <h2 id="upload-title">Add a source</h2>
+        </div>
+        <button
+          class="icon-button"
+          data-close="upload-dialog"
+          aria-label="Close upload"
+        >
+          <svg class="icon"><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <p class="modal-description">
+        Upload a text file, or paste something worth finding again.
+      </p>
+      <form id="upload-form">
+        <input
+          type="file"
+          id="file-input"
+          class="sr-only"
+          accept=".txt,.md,text/plain,text/markdown"
+          tabindex="-1"
+        /><button class="upload-drop" id="choose-file" type="button">
+          <span class="upload-icon"
+            ><svg class="icon"><use href="#i-upload" /></svg></span
+          ><strong>Choose a file or drop it here</strong
+          ><span>.txt or .md · UTF-8 · up to 128 KiB</span></button
+        ><label class="field-label" for="filename">Source filename</label
+        ><input
+          class="text-field"
+          id="filename"
+          name="filename"
+          value="notes.md"
+          maxlength="120"
+          required
+        /><label class="field-label" for="source-content"
+          >Source text<span>Markdown is displayed as plain text</span></label
+        ><textarea
+          class="text-field source-textarea"
+          id="source-content"
+          name="content"
+          rows="8"
+          placeholder="# Project notes&#10;&#10;Paste your source text here…"
+          spellcheck="false"
+          required
+        ></textarea>
+        <div class="upload-meta">
+          <span id="upload-size">0 bytes</span
+          ><span>Private to your browser collection</span>
+        </div>
+        <p id="upload-error" class="form-error" role="alert" hidden></p>
+        <div class="modal-footer">
+          <button class="secondary" type="button" data-close="upload-dialog">
+            Cancel</button
+          ><button class="primary" type="submit" id="upload-submit">
+            <svg class="icon"><use href="#i-plus" /></svg>Add to collection
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog
+      id="source-dialog"
+      class="source-modal"
+      aria-labelledby="source-title"
+    >
+      <div class="source-header">
+        <span class="source-eyebrow"
+          ><svg class="icon"><use href="#i-file" /></svg>ORIGINAL SOURCE</span
+        ><button
+          class="icon-button"
+          data-close="source-dialog"
+          aria-label="Close source"
+        >
+          <svg class="icon"><use href="#i-x" /></svg>
+        </button>
+        <h2 id="source-title">Source</h2>
+        <p id="source-filename"></p>
+      </div>
+      <div class="source-location">
+        <span id="source-line-label">Line-numbered plain text</span
+        ><button class="text-button danger-text" id="source-delete">
+          <svg class="icon"><use href="#i-trash" /></svg>Delete source
+        </button>
+      </div>
+      <div class="source-content" id="source-lines"></div>
+      <div class="source-pagination">
+        <button class="secondary" id="source-previous">Previous lines</button
+        ><span id="source-page-label"></span
+        ><button class="secondary" id="source-next">Next lines</button>
+      </div>
+      <div class="source-bottom-note">
+        Highlighted lines contain the retrieved passage. The source is displayed
+        verbatim.
+      </div>
+    </dialog>
+    <dialog
+      id="confirm-dialog"
+      class="modal confirm-modal"
+      aria-labelledby="confirm-title"
+    >
+      <div class="modal-heading">
+        <h2 id="confirm-title">Confirm action</h2>
+        <button
+          class="icon-button"
+          data-close="confirm-dialog"
+          aria-label="Cancel"
+        >
+          <svg class="icon"><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <p class="modal-description" id="confirm-description"></p>
+      <p class="form-error" id="confirm-error" hidden role="alert"></p>
+      <div class="modal-footer">
+        <button class="secondary" data-close="confirm-dialog">Cancel</button
+        ><button class="danger" id="confirm-submit">Confirm</button>
+      </div>
+    </dialog>
+    <dialog
+      id="about-dialog"
+      class="modal about-modal"
+      aria-labelledby="about-title"
+    >
+      <div class="modal-heading">
+        <div>
+          <p class="eyebrow">TRANSPARENT BY DESIGN</p>
+          <h2 id="about-title">Evidence, without the guesswork.</h2>
+        </div>
+        <button
+          class="icon-button"
+          data-close="about-dialog"
+          aria-label="Close explanation"
+        >
+          <svg class="icon"><use href="#i-x" /></svg>
+        </button>
+      </div>
+      <p class="modal-description">
+        BriefLedger is a lexical document search workbench. It finds source
+        passages; it does not write answers or call an AI provider.
+      </p>
+      <ol class="method-steps">
+        <li>
+          <span>01</span>
+          <div>
+            <h3>Keep the source</h3>
+            <p>
+              Your UTF-8 text is stored in a private SQLite collection for this
+              browser.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span>02</span>
+          <div>
+            <h3>Index small passages</h3>
+            <p>
+              Overlapping chunks retain their original character offsets and
+              line ranges.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span>03</span>
+          <div>
+            <h3>Match and rank</h3>
+            <p>
+              SQLite FTS5 matches all search terms, with English stemming. BM25
+              orders the matching passages.
+            </p>
+          </div>
+        </li>
+        <li>
+          <span>04</span>
+          <div>
+            <h3>Check the evidence</h3>
+            <p>
+              Read an actual excerpt and open the source. If no passage matches,
+              the result says so.
+            </p>
+          </div>
+        </li>
+      </ol>
+      <div class="about-privacy">
+        <svg class="icon"><use href="#i-shield" /></svg>
+        <p>
+          No account or API key is needed. Your browser cookie grants access to
+          this collection, which expires after seven days. Clearing cookies
+          loses access. This is a demo: use test documents, not sensitive
+          information.<span id="about-storage"></span>
+        </p>
+      </div>
+    </dialog>
+    <noscript
+      ><div class="noscript">
+        BriefLedger needs JavaScript to search its local document API. No
+        third-party scripts are used.
+      </div></noscript
+    >
+  </body>
+</html>
