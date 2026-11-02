@@ -6,6 +6,10 @@ BriefLedger is a Python document search workbench that returns actual evidence f
 
 > This is lexical retrieval, not generated AI answers. If the text does not match, BriefLedger says **“No supporting passage found.”** It never invents an answer or a citation.
 
+[Live demo](https://briefledger.onrender.com/) · [CI checks](https://github.com/tanveerchana/briefledger/actions) · [Hosted verification](docs/hosted-verification.md)
+
+The free demo uses temporary storage and can take time to wake after idle spin-down. Use synthetic text only.
+
 ## Run locally
 
 Requires Python 3.12+ with SQLite FTS5 (the official Python Linux image and normal CPython packages include it).
